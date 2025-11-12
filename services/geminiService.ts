@@ -12,11 +12,6 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-const generationConfig = {
-  responseMimeType: "application/json",
-};
-
-// FIX: Updated safetySettings to use HarmCategory and HarmBlockThreshold enums from @google/genai.
 const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -44,6 +39,7 @@ const parseDomainResponse = (responseText: string): string[] => {
 }
 
 export const generateDomainNames = async (description: string, existingNames: string[] = []): Promise<string[]> => {
+  let responseText = '';
   try {
     let prompt = `Generate a list of 10 creative, brandable, and short domain name ideas based on the following description: "${description}". The domain names must not include TLDs like .com. Only provide the root domain name. Ensure names are single words or very short phrases suitable for a URL.`;
 
@@ -54,31 +50,46 @@ export const generateDomainNames = async (description: string, existingNames: st
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
-        // FIX: Moved safetySettings into the config object as it's not a valid top-level property for generateContent.
-        config: { ...generationConfig, responseSchema: domainSchema, safetySettings },
+        config: { 
+            responseMimeType: "application/json",
+            responseSchema: domainSchema, 
+            safetySettings 
+        },
     });
     
-    return parseDomainResponse(response.text);
+    responseText = response.text;
+    return parseDomainResponse(responseText);
   } catch (error) {
     console.error("Error generating domain names:", error);
+    if (responseText) {
+        console.error("AI Response that failed to parse:", responseText);
+    }
     throw new Error("Failed to generate domain names from AI. Please try again.");
   }
 };
 
 export const generateAlternativeNames = async (domainName: string): Promise<string[]> => {
+    let responseText = '';
     try {
         const prompt = `The domain name "${domainName}.com" is taken. Generate a list of 3 highly creative, brandable, and clever alternatives. The alternatives should be short, memorable, and related to the original idea. Do not include TLDs.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
-            // FIX: Moved safetySettings into the config object as it's not a valid top-level property for generateContent.
-            config: { ...generationConfig, responseSchema: domainSchema, safetySettings },
+            config: { 
+                responseMimeType: "application/json",
+                responseSchema: domainSchema, 
+                safetySettings
+            },
         });
-
-        return parseDomainResponse(response.text);
+        
+        responseText = response.text;
+        return parseDomainResponse(responseText);
     } catch (error) {
         console.error(`Error generating alternatives for ${domainName}:`, error);
+        if (responseText) {
+            console.error("AI Response that failed to parse:", responseText);
+        }
         throw new Error("Failed to generate alternatives from AI. Please try again.");
     }
 };
