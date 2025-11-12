@@ -1,5 +1,6 @@
 
-import { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } from "@google/genai";
+
+import { GoogleGenAI, Type } from "@google/genai";
 
 // Ensure the API key is available. In a real environment, this check is crucial.
 // For this context, we assume `process.env.API_KEY` is populated.
@@ -11,13 +12,6 @@ if (!API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
-
-const safetySettings = [
-    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-];
 
 const domainSchema = {
   type: Type.OBJECT,
@@ -41,19 +35,21 @@ const parseDomainResponse = (responseText: string): string[] => {
 export const generateDomainNames = async (description: string, existingNames: string[] = []): Promise<string[]> => {
   let responseText = '';
   try {
-    let prompt = `Generate a list of 10 creative, brandable, and short domain name ideas based on the following description: "${description}". The domain names must not include TLDs like .com. Only provide the root domain name. Ensure names are single words or very short phrases suitable for a URL.`;
+    const systemInstruction = "You are an expert domain name generator. Your task is to generate creative, brandable, and short domain name ideas based on a user-provided description. The domain names must not include TLDs like .com. You must only provide the root domain name. Ensure names are single words or very short phrases suitable for a URL. You must always respond in the requested JSON format, even if the user's description is very short or just a single word.";
+    
+    let userPrompt = `Generate a list of 10 creative domain name ideas for: "${description}".`;
 
     if (existingNames.length > 0) {
-        prompt += ` Provide completely new ideas that are not on this list: ${existingNames.join(', ')}.`;
+        userPrompt += ` Provide completely new ideas that are not on this list: ${existingNames.join(', ')}.`;
     }
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: userPrompt,
         config: { 
+            systemInstruction,
             responseMimeType: "application/json",
             responseSchema: domainSchema, 
-            safetySettings 
         },
     });
     
@@ -71,15 +67,17 @@ export const generateDomainNames = async (description: string, existingNames: st
 export const generateAlternativeNames = async (domainName: string): Promise<string[]> => {
     let responseText = '';
     try {
-        const prompt = `The domain name "${domainName}.com" is taken. Generate a list of 3 highly creative, brandable, and clever alternatives. The alternatives should be short, memorable, and related to the original idea. Do not include TLDs.`;
+        const systemInstruction = "You are an expert domain name generator. When a domain name is taken, you provide 3 creative, brandable, and clever alternatives. The alternatives should be short, memorable, and related to the original idea. Do not include TLDs. You must always respond in the requested JSON format.";
+        
+        const prompt = `The domain name "${domainName}" is taken. Generate alternatives.`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: { 
+                systemInstruction,
                 responseMimeType: "application/json",
                 responseSchema: domainSchema, 
-                safetySettings
             },
         });
         
