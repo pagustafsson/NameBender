@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SparklesIcon from './icons/SparklesIcon';
 import Loader from './Loader';
 
@@ -7,8 +7,43 @@ interface DomainInputProps {
   isLoading: boolean;
 }
 
+const suggestions = [
+  'a collaborative whiteboard for teams',
+  'Music app for discovering new artists',
+  'Name for a crypto startup',
+  'Social media domain names',
+  'Fashion brand inspiration',
+  'A meal delivery service for pets',
+  'AI-powered personal finance tracker',
+  'Eco-friendly packaging solutions',
+  'Online platform for local artisans',
+];
+
 const DomainInput: React.FC<DomainInputProps> = ({ onGenerate, isLoading }) => {
   const [prompt, setPrompt] = useState('');
+  const [placeholder, setPlaceholder] = useState(suggestions[0]);
+  const [isFading, setIsFading] = useState(false);
+  const placeholderIndexRef = useRef(0);
+
+  useEffect(() => {
+    if (prompt) {
+      setIsFading(false); // Ensure placeholder is visible when typing
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setIsFading(true); // Trigger fade out
+
+      setTimeout(() => {
+        placeholderIndexRef.current = (placeholderIndexRef.current + 1) % suggestions.length;
+        setPlaceholder(suggestions[placeholderIndexRef.current]);
+        setIsFading(false); // Trigger fade in
+      }, 500); // This duration should match the CSS transition for fade-out
+    }, 2500); // Change every 2.5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [prompt]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +59,8 @@ const DomainInput: React.FC<DomainInputProps> = ({ onGenerate, isLoading }) => {
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., a collaborative whiteboard for teams"
-          className="flex-grow w-full px-4 py-3 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
+          placeholder={placeholder}
+          className={`flex-grow w-full px-4 py-3 bg-slate-800 text-slate-200 border border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none transition placeholder:text-slate-500 placeholder:transition-opacity placeholder:duration-500 ${isFading ? 'placeholder:opacity-0' : 'placeholder:opacity-100'}`}
           disabled={isLoading}
         />
         <button
