@@ -144,10 +144,10 @@ const App: React.FC = () => {
           <p className="text-lg text-slate-400 max-w-2xl">
             Get inspired with creative domain names and check availability instantly.
           </p>
+          <p className="text-xs text-slate-500 mt-4">Vibe coded by P-A Gustafsson</p>
         </header>
 
         <DomainInput onGenerate={handleGenerate} isLoading={isLoading} />
-        <p className="text-xs text-slate-500 mt-2 text-center">Vibe coded by P-A Gustafsson</p>
 
 
         {error && (
