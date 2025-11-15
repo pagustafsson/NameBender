@@ -6,9 +6,7 @@ export enum AvailabilityStatus {
   TAKEN = 'TAKEN',
 }
 
-export type TLD = '.com' | '.co' | '.ai';
-
-export const TLDs: TLD[] = ['.com', '.co', '.ai'];
+export type TLD = string;
 
 export interface DomainAvailability {
   tld: TLD;

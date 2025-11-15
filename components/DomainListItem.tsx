@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import type { DomainSuggestion, TLD } from '../types';
-import { AvailabilityStatus, TLDs } from '../types';
+import { AvailabilityStatus } from '../types';
 import StatusPill from './StatusPill';
 import Loader from './Loader';
 import DomainList from './DomainList';
 
 interface DomainListItemProps {
   domain: DomainSuggestion;
+  selectedTlds: TLD[];
   onUpdate: (id: string, updates: Partial<DomainSuggestion>) => void;
   onCheckAvailability: (id: string, tld: TLD) => Promise<void>;
   onGenerateAlternatives: (id: string, name: string) => Promise<void>;
@@ -15,6 +16,7 @@ interface DomainListItemProps {
 
 const DomainListItem: React.FC<DomainListItemProps> = ({
   domain,
+  selectedTlds,
   onUpdate,
   onCheckAvailability,
   onGenerateAlternatives,
@@ -22,21 +24,25 @@ const DomainListItem: React.FC<DomainListItemProps> = ({
 }) => {
   useEffect(() => {
     const performChecks = async () => {
-      const checkPromises = TLDs.map(tld => onCheckAvailability(domain.id, tld));
+      const checkPromises = selectedTlds.map(tld => {
+        const availability = domain.availability.find(a => a.tld === tld);
+        // Only check if status is UNKNOWN for the selected TLD
+        if (!availability || availability.status === AvailabilityStatus.UNKNOWN) {
+          return onCheckAvailability(domain.id, tld);
+        }
+        return Promise.resolve();
+      });
       await Promise.all(checkPromises);
     };
     
-    // Only check if status is UNKNOWN for any TLD
-    if (domain.availability.some(a => a.status === AvailabilityStatus.UNKNOWN)) {
-        performChecks();
-    }
+    performChecks();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain.id]);
+  }, [domain.id, domain.availability, selectedTlds]);
 
   useEffect(() => {
-     // Check if .com is taken and alternatives haven't been generated/are not generating
+     // Check if .com is taken (if it's a selected TLD) and alternatives haven't been generated
      const comStatus = domain.availability.find(a => a.tld === '.com')?.status;
-     // Only generate alternatives for top-level suggestions if .com is taken
+     
      if (!isAlternative && comStatus === AvailabilityStatus.TAKEN && !domain.alternatives && !domain.isGeneratingAlternatives) {
         onGenerateAlternatives(domain.id, domain.name);
      }
@@ -44,43 +50,58 @@ const DomainListItem: React.FC<DomainListItemProps> = ({
   }, [domain.availability, domain.id, domain.name, domain.alternatives, domain.isGeneratingAlternatives, isAlternative]);
 
   const domainInfo = (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      <p className="font-semibold text-lg text-slate-100 break-all">{domain.name}</p>
-      <div className="flex items-center gap-4 shrink-0">
-        {TLDs.map(tld => {
+    <>
+      {/* --- Mobile Layout --- */}
+      <div className="flex flex-col md:hidden items-start gap-y-4">
+        <p className={`font-semibold text-slate-100 whitespace-nowrap ${isAlternative ? 'text-lg' : 'text-xl'}`}>{domain.name}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+          {selectedTlds.map(tld => {
+            const availability = domain.availability.find(a => a.tld === tld) || { status: AvailabilityStatus.UNKNOWN, tld };
+            return (
+                <StatusPill key={tld} status={availability.status} domainName={domain.name} tld={tld} />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* --- Desktop Grid Layout --- */}
+      <div
+        className="hidden md:grid items-center gap-x-6"
+        style={{ gridTemplateColumns: `minmax(0, 1.5fr) repeat(${selectedTlds.length}, minmax(100px, 1fr))` }}
+      >
+        <p className={`font-semibold text-slate-100 whitespace-nowrap truncate pr-4 ${isAlternative ? 'text-lg' : 'text-xl'}`}>{domain.name}</p>
+        {selectedTlds.map(tld => {
           const availability = domain.availability.find(a => a.tld === tld) || { status: AvailabilityStatus.UNKNOWN, tld };
           return (
-            <div key={tld} className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-400">{tld}</span>
+            <div key={tld} className="flex items-center justify-center">
               <StatusPill status={availability.status} domainName={domain.name} tld={tld} />
             </div>
           );
         })}
       </div>
-    </div>
+    </>
   );
 
   if (isAlternative) {
     // For alternatives, render just the info without any boxing/background.
-    // The parent DomainList provides the vertical spacing.
     return domainInfo;
   }
 
-  // For primary suggestions, render the full component with a box and the alternatives section.
   return (
-    <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+    <div className="bg-zinc-900/40 p-5 rounded-xl border border-zinc-800/50 transition-all hover:border-zinc-700/80">
       {domainInfo}
       {domain.isGeneratingAlternatives && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-400">
-          <Loader />
+        <div className="mt-4 flex items-center justify-start gap-2 text-sm text-gray-400">
+          <Loader className="w-4 h-4 text-[#00ff99]" />
           <span>Finding creative alternatives...</span>
         </div>
       )}
       {domain.alternatives && domain.alternatives.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-slate-700">
-           <h4 className="text-sm font-semibold text-sky-400 mb-2">Alternatives:</h4>
+        <div className="mt-5 pt-5 border-t border-zinc-800">
+           <h4 className="text-sm font-semibold text-[#00ff99] mb-3">Alternatives:</h4>
            <DomainList 
              domains={domain.alternatives}
+             selectedTlds={selectedTlds}
              onUpdate={onUpdate}
              onCheckAvailability={onCheckAvailability}
              onGenerateAlternatives={onGenerateAlternatives}

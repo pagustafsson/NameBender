@@ -1,11 +1,15 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { generateDomainNames, generateAlternativeNames } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
 import type { DomainSuggestion, TLD } from './types';
-import { AvailabilityStatus, TLDs } from './types';
+import { AvailabilityStatus } from './types';
 import DomainInput from './components/DomainInput';
 import DomainList from './components/DomainList';
 import Loader from './components/Loader';
+import TldSettingsModal from './components/TldSettingsModal';
+
+const TLD_STORAGE_KEY = 'aiDomainGenerator_selectedTlds';
 
 const App: React.FC = () => {
   const [domains, setDomains] = useState<DomainSuggestion[]>([]);
@@ -13,6 +17,34 @@ const App: React.FC = () => {
   const [isShowingMore, setIsShowingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState('');
+  
+  const [selectedTlds, setSelectedTlds] = useState<TLD[]>(() => {
+    try {
+      const savedTlds = localStorage.getItem(TLD_STORAGE_KEY);
+      if (savedTlds) {
+        const parsedTlds = JSON.parse(savedTlds);
+        if (Array.isArray(parsedTlds) && parsedTlds.length > 0 && parsedTlds.every(item => typeof item === 'string')) {
+          return parsedTlds;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse TLDs from localStorage', error);
+    }
+    // Default for first-time users or if localStorage is invalid
+    return ['.com', '.ai', '.co'];
+  });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Persist TLD selection to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(TLD_STORAGE_KEY, JSON.stringify(selectedTlds));
+    } catch (error) {
+      console.error('Failed to save TLDs to localStorage', error);
+    }
+  }, [selectedTlds]);
+
 
   const handleGenerate = async (prompt: string) => {
     setIsLoading(true);
@@ -20,15 +52,33 @@ const App: React.FC = () => {
     setDomains([]);
     setLastPrompt(prompt);
 
+    const trimmedPrompt = prompt.trim().toLowerCase();
+    const isSingleWord = !trimmedPrompt.includes(' ') && trimmedPrompt.length > 0;
+
     try {
-      const names = await generateDomainNames(prompt);
-      const initialSuggestions: DomainSuggestion[] = names.map(name => ({
+      // Pass the single word to the AI to avoid it being suggested again.
+      const existingNamesForAI = isSingleWord ? [trimmedPrompt] : [];
+      const names = await generateDomainNames(prompt, existingNamesForAI);
+
+      let suggestions: DomainSuggestion[] = names.map(name => ({
         id: `${name}-${Date.now()}-${Math.random()}`,
         name,
-        availability: TLDs.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+        availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
         isGeneratingAlternatives: false,
       }));
-      setDomains(initialSuggestions);
+
+      // If it's a single word search, add it to the top of the list.
+      if (isSingleWord) {
+        const singleWordSuggestion: DomainSuggestion = {
+          id: `${trimmedPrompt}-${Date.now()}-${Math.random()}`,
+          name: trimmedPrompt.replace(/[\s.]+/g, ''), // Sanitize just in case
+          availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+          isGeneratingAlternatives: false,
+        };
+        suggestions.unshift(singleWordSuggestion);
+      }
+
+      setDomains(suggestions);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unknown error occurred.');
     } finally {
@@ -99,7 +149,7 @@ const App: React.FC = () => {
         const altSuggestions: DomainSuggestion[] = altNames.map(altName => ({
             id: `${altName}-${Date.now()}-${Math.random()}`,
             name: altName,
-            availability: TLDs.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+            availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
             isGeneratingAlternatives: false,
         }));
         updateDomainState(id, { alternatives: altSuggestions, isGeneratingAlternatives: false });
@@ -108,7 +158,7 @@ const App: React.FC = () => {
         console.error("Failed to generate alternatives for", name);
         updateDomainState(id, { isGeneratingAlternatives: false });
     }
-  }, [updateDomainState]);
+  }, [updateDomainState, selectedTlds]);
 
   const handleShowMore = async () => {
     setIsShowingMore(true);
@@ -122,7 +172,7 @@ const App: React.FC = () => {
           .map(name => ({
             id: `${name}-${Date.now()}-${Math.random()}`,
             name,
-            availability: TLDs.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+            availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
             isGeneratingAlternatives: false,
         }));
         setDomains(prevDomains => [...prevDomains, ...newSuggestions]);
@@ -133,51 +183,96 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSaveTlds = (newTlds: TLD[]) => {
+    setSelectedTlds(newTlds);
+    setIsModalOpen(false);
+
+    if (domains.length > 0) {
+      const updateAvailabilityForSuggestion = (suggestion: DomainSuggestion): DomainSuggestion => ({
+        ...suggestion,
+        availability: newTlds.map(tld => {
+          const existing = suggestion.availability.find(a => a.tld === tld);
+          return existing ? existing : { tld, status: AvailabilityStatus.UNKNOWN };
+        }),
+      });
+
+      const updatedDomains = domains.map(domain => ({
+        ...updateAvailabilityForSuggestion(domain),
+        alternatives: domain.alternatives?.map(updateAvailabilityForSuggestion)
+      }));
+      
+      setDomains(updatedDomains);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans">
-      <main className="container mx-auto px-4 py-12 sm:py-16 md:py-20 flex flex-col items-center">
+    <div className="min-h-screen bg-transparent text-slate-200 flex flex-col">
+      <main className="container mx-auto px-4 py-16 sm:py-24 flex flex-col items-center flex-grow">
         <header className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-sky-400 to-cyan-300 text-transparent bg-clip-text">
-            Epic Name Generator
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-[#00ff99]">
+            AI Domain Generator
           </h1>
-          <p className="text-lg text-slate-400 max-w-2xl">
-            Get inspired with creative domain names and check availability instantly.
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+            Generate brilliant domain names with AI and check availability instantly.
           </p>
-          <p className="text-xs text-slate-500 mt-4">Vibe coded by P-A Gustafsson</p>
         </header>
 
-        <DomainInput onGenerate={handleGenerate} isLoading={isLoading} />
+        <DomainInput 
+          onGenerate={handleGenerate} 
+          isLoading={isLoading} 
+          onSettingsClick={() => setIsModalOpen(true)}
+        />
 
+        <TldSettingsModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveTlds}
+          initialSelectedTlds={selectedTlds}
+        />
 
         {error && (
-          <div className="mt-6 bg-rose-500/10 text-rose-400 p-4 rounded-lg text-center border border-rose-500/20">
+          <div className="mt-8 text-red-400 text-center">
             <strong>Error:</strong> {error}
           </div>
         )}
         
-        <div className="mt-16 w-full max-w-3xl">
+        <div className="mt-16 w-full max-w-6xl">
             {domains.length > 0 && 
                 <DomainList 
-                    domains={domains} 
+                    domains={domains}
+                    selectedTlds={selectedTlds}
                     onUpdate={updateDomainState}
                     onCheckAvailability={handleCheckAvailability}
                     onGenerateAlternatives={handleGenerateAlternatives}
                 />
             }
             {domains.length > 0 && !isLoading && (
-              <div className="mt-8 text-center">
+              <div 
+                className="mt-12 text-center animate-fade-in"
+                style={{ animationDelay: `${domains.length * 50}ms`}}
+              >
                 <button
                   onClick={handleShowMore}
                   disabled={isShowingMore}
-                  className="flex items-center justify-center mx-auto px-6 py-3 font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-sky-500 min-w-[140px]"
+                  className="flex items-center justify-center mx-auto px-8 py-3 font-semibold text-black bg-[#00ff99] rounded-lg hover:opacity-90 disabled:bg-opacity-75 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:ring-[#00ff99] min-w-[160px]"
                 >
-                  {isShowingMore ? <Loader /> : <span>Show More</span>}
+                  {isShowingMore ? <Loader className="w-5 h-5 text-white" /> : <span>Show More</span>}
                 </button>
               </div>
             )}
         </div>
       </main>
+      <footer className="text-center py-8 text-xs text-zinc-500">
+        Vibe coded by{' '}
+        <a
+          href="https://linkedin.com/in/pagustafsson"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-zinc-400 hover:text-[#00ff99] transition-colors"
+        >
+          P-A Gustafsson
+        </a>
+      </footer>
     </div>
   );
 };

@@ -9,8 +9,6 @@ interface StatusPillProps {
 }
 
 const StatusPill: React.FC<StatusPillProps> = ({ status, domainName, tld }) => {
-  const baseClasses = "px-2 py-0.5 text-xs font-semibold rounded-full flex items-center justify-center min-w-[70px] transition-colors";
-  
   const url = status === AvailabilityStatus.TAKEN
     ? `https://${domainName}${tld}`
     : `https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${domainName}${tld}`;
@@ -19,37 +17,35 @@ const StatusPill: React.FC<StatusPillProps> = ({ status, domainName, tld }) => {
     ? `Visit the live website for ${domainName}${tld}`
     : `Check registration availability for ${domainName}${tld} on GoDaddy`;
 
+  let content: React.ReactNode;
+  let pillClasses = "flex items-center justify-center gap-2 w-full px-3 py-2 text-sm font-semibold rounded-md border transition-colors duration-150";
 
-  const PillContent = () => {
-      switch (status) {
-        case AvailabilityStatus.CHECKING:
-          return (
-            <div className={`${baseClasses} bg-slate-700 text-slate-300`}>
-              <Loader className="w-3 h-3" />
-            </div>
-          );
-        case AvailabilityStatus.AVAILABLE:
-          return (
-            <div className={`${baseClasses} bg-teal-500/10 text-teal-400 border border-teal-500/20 group-hover:bg-teal-500/20`}>
-              Available
-            </div>
-          );
-        case AvailabilityStatus.TAKEN:
-          return (
-            <div className={`${baseClasses} bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:bg-rose-500/20`}>
-              Taken
-            </div>
-          );
-        case AvailabilityStatus.UNKNOWN:
-        default:
-          return (
-            <div className={`${baseClasses} bg-slate-700 text-slate-500`}>
-              ...
-            </div>
-          );
-      }
+  switch (status) {
+    case AvailabilityStatus.CHECKING:
+      pillClasses += " bg-zinc-800 border-zinc-700 text-zinc-400 cursor-wait";
+      content = (
+        <>
+          <Loader className="w-3 h-3" />
+          <span>{tld}</span>
+        </>
+      );
+      break;
+    case AvailabilityStatus.AVAILABLE:
+      pillClasses += " bg-[#00ff99]/10 border-[#00ff99]/50 text-[#00ff99] hover:bg-[#00ff99]/20 hover:border-[#00ff99]/70";
+      content = <span>{tld}</span>;
+      break;
+    case AvailabilityStatus.TAKEN:
+      pillClasses += " bg-zinc-800 border-zinc-700 text-zinc-400 group-hover:border-zinc-600 group-hover:text-zinc-300";
+      content = <span>{tld}</span>;
+      break;
+    case AvailabilityStatus.UNKNOWN:
+    default:
+      pillClasses += " bg-yellow-900/50 border-yellow-700/60 text-yellow-400 cursor-default";
+      content = <span>{tld}</span>;
+      break;
   }
 
+  const PillContent = <div className={pillClasses}>{content}</div>;
 
   if (status === AvailabilityStatus.AVAILABLE || status === AvailabilityStatus.TAKEN) {
     return (
@@ -58,14 +54,14 @@ const StatusPill: React.FC<StatusPillProps> = ({ status, domainName, tld }) => {
         target="_blank" 
         rel="noopener noreferrer" 
         aria-label={ariaLabel}
-        className="group"
+        className="group w-full"
       >
-        <PillContent />
+        {PillContent}
       </a>
     );
   }
 
-  return <PillContent />;
+  return <div className="w-full">{PillContent}</div>;
 };
 
 export default StatusPill;

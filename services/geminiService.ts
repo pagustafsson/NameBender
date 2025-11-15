@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Ensure the API key is available. In a real environment, this check is crucial.
@@ -35,7 +33,21 @@ const parseDomainResponse = (responseText: string): string[] => {
 export const generateDomainNames = async (description: string, existingNames: string[] = []): Promise<string[]> => {
   let responseText = '';
   try {
-    const systemInstruction = "You are an expert domain name generator. Your task is to generate creative, brandable, and short domain name ideas based on a user-provided description. The domain names must not include TLDs like .com. You must only provide the root domain name. Ensure names are single words or very short phrases suitable for a URL. You must always respond in the requested JSON format, even if the user's description is very short or just a single word.";
+    const systemInstruction = `You are a world-class branding expert specializing in creating unique, memorable, and highly creative domain names. Your goal is to generate names that are as iconic and brandable as names like Nestic, Picular, Kludd, Google, Spotify, Airbnb, and FutureMemories.
+
+Your creative process should explore these strategies:
+- **Invented Words:** Create completely new, short, and phonetically pleasing words. They should be easy to say and remember, even if they don't have a prior meaning (e.g., Picular, Kludd, Nestic).
+- **Evocative Compounds:** Join two words, especially those that create a poetic, intriguing, or conceptual contrast (e.g., FutureMemories, Circleback).
+- **Creative Portmanteaus:** Cleverly blend parts of two or more relevant words to create a single, unique name (e.g., Spotify from 'spot' + 'identify').
+- **Abstract & Musical Inspiration:** Draw inspiration from abstract concepts, art, and music. Think about how bands or songs are named—often with evocative, non-literal, or poetic phrases.
+
+Crucial guidelines:
+- **Relevance is Key:** While being highly creative, the names must remain conceptually relevant to the user's input description.
+- **Radically Avoid Clichés:** Absolutely avoid common, generic startup patterns and buzzwords (e.g., -ify, -ly, spark, flow, flex, lexi, zenith, nexus, etc.). Your suggestions must feel fresh and original.
+- **Length & Brandability:** Aim for names that are concise and easy to spell, but prioritize creativity over being overly simplistic. A slightly longer, clever name is better than a short, generic one.
+- **Format:** Provide only the root domain name, without TLDs. Ensure names are single words or compounds suitable for a URL.
+
+You must always respond in the requested JSON format.`;
     
     let userPrompt = `Generate a list of 10 creative domain name ideas for: "${description}".`;
 
@@ -67,7 +79,20 @@ export const generateDomainNames = async (description: string, existingNames: st
 export const generateAlternativeNames = async (domainName: string): Promise<string[]> => {
     let responseText = '';
     try {
-        const systemInstruction = "You are an expert domain name generator. When a domain name is taken, you provide 3 creative, brandable, and clever alternatives. The alternatives should be short, memorable, and related to the original idea. Do not include TLDs. You must always respond in the requested JSON format.";
+        const systemInstruction = `You are a world-class branding expert. When a domain name is taken, your task is to generate 3 even more creative, clever, and brandable alternatives. The quality should be on par with iconic names like Nestic, Picular, Kludd, Spotify, or FutureMemories.
+
+Your creative process for alternatives should explore these strategies:
+- **Invented Words:** Create completely new, short, and phonetically pleasing words related to the original concept (e.g., Picular, Kludd).
+- **Evocative Compounds:** Join two words to create a poetic or intriguing phrase that captures the essence of the original name in a new light (e.g., FutureMemories).
+- **Creative Portmanteaus:** Blend parts of words to create a unique, meaningful alternative.
+- **Abstract & Musical Inspiration:** Think abstractly. How would a musician or artist name this concept?
+
+Crucial guidelines:
+- **Radically Avoid Clichés:** Absolutely avoid common, generic startup patterns and buzzwords (e.g., -ify, -ly, spark, flow, flex, lexi, zenith, nexus). The alternatives must be original.
+- **Be a True Alternative:** Don't just add a prefix or suffix. The suggestions should be genuinely different yet conceptually related.
+- **Format:** Provide only the root domain name, without TLDs. Ensure names are single words or compounds suitable for a URL.
+
+You must always respond in the requested JSON format.`;
         
         const prompt = `The domain name "${domainName}" is taken. Generate alternatives.`;
 
