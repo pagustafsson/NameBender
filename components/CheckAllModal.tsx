@@ -64,12 +64,12 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="check-all-modal-title"
     >
-      <div className="bg-[#111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+      <div className="bg-[#111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[calc(100vh-2rem)] flex flex-col">
         <header className="p-6 border-b border-zinc-800 shrink-0">
           <h2 id="check-all-modal-title" className="text-xl font-bold text-slate-100">
             Checking all TLDs for: <span className="text-[#00ff99]">{domainName}</span>
@@ -87,7 +87,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
         
         {!isLoading && (
           <main className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-x-8">
-            <div>
+            <div className="pb-6 mb-6 border-b border-zinc-800 md:pb-0 md:mb-0 md:border-b-0">
               <h3 className="text-lg font-semibold text-green-400 mb-3">Available ({available.length})</h3>
               <ul className="space-y-1">
                 {available.map(({ tld }) => (
