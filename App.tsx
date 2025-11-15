@@ -8,6 +8,7 @@ import DomainInput from './components/DomainInput';
 import DomainList from './components/DomainList';
 import Loader from './components/Loader';
 import TldSettingsModal from './components/TldSettingsModal';
+import CheckAllModal from './components/CheckAllModal';
 
 const TLD_STORAGE_KEY = 'aiDomainGenerator_selectedTlds';
 
@@ -34,7 +35,9 @@ const App: React.FC = () => {
     return ['.com', '.ai', '.co'];
   });
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTldModalOpen, setIsTldModalOpen] = useState(false);
+  const [isCheckAllModalOpen, setIsCheckAllModalOpen] = useState(false);
+  const [domainForCheckAll, setDomainForCheckAll] = useState<string | null>(null);
 
   // Persist TLD selection to localStorage whenever it changes
   useEffect(() => {
@@ -45,6 +48,10 @@ const App: React.FC = () => {
     }
   }, [selectedTlds]);
 
+  const handleCheckAllTlds = (domainName: string) => {
+    setDomainForCheckAll(domainName);
+    setIsCheckAllModalOpen(true);
+  };
 
   const handleGenerate = async (prompt: string) => {
     setIsLoading(true);
@@ -185,7 +192,7 @@ const App: React.FC = () => {
 
   const handleSaveTlds = (newTlds: TLD[]) => {
     setSelectedTlds(newTlds);
-    setIsModalOpen(false);
+    setIsTldModalOpen(false);
 
     if (domains.length > 0) {
       const updateAvailabilityForSuggestion = (suggestion: DomainSuggestion): DomainSuggestion => ({
@@ -220,14 +227,20 @@ const App: React.FC = () => {
         <DomainInput 
           onGenerate={handleGenerate} 
           isLoading={isLoading} 
-          onSettingsClick={() => setIsModalOpen(true)}
+          onSettingsClick={() => setIsTldModalOpen(true)}
         />
 
         <TldSettingsModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isTldModalOpen}
+          onClose={() => setIsTldModalOpen(false)}
           onSave={handleSaveTlds}
           initialSelectedTlds={selectedTlds}
+        />
+
+        <CheckAllModal 
+            isOpen={isCheckAllModalOpen}
+            onClose={() => setIsCheckAllModalOpen(false)}
+            domainName={domainForCheckAll}
         />
 
         {error && (
@@ -244,6 +257,7 @@ const App: React.FC = () => {
                     onUpdate={updateDomainState}
                     onCheckAvailability={handleCheckAvailability}
                     onGenerateAlternatives={handleGenerateAlternatives}
+                    onCheckAll={handleCheckAllTlds}
                 />
             }
             {domains.length > 0 && !isLoading && (

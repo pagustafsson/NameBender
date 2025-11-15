@@ -8,6 +8,7 @@ interface DomainListProps {
   onUpdate: (id: string, updates: Partial<DomainSuggestion>) => void;
   onCheckAvailability: (id: string, tld: TLD) => Promise<void>;
   onGenerateAlternatives: (id: string, name: string) => Promise<void>;
+  onCheckAll: (name: string) => void;
   isAlternative?: boolean;
 }
 
