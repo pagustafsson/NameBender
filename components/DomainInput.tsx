@@ -11,15 +11,17 @@ interface DomainInputProps {
 }
 
 const suggestions = [
-  'a collaborative whiteboard for teams',
-  'Music app for discovering new artists',
-  'Name for a crypto startup',
-  'Social media domain names',
-  'Fashion brand inspiration',
-  'A meal delivery service for pets',
-  'AI-powered personal finance tracker',
-  'Eco-friendly packaging solutions',
-  'Online platform for local artisans',
+  'Names inspired by the movie Tron',
+  'A crypto startup name',
+  'Future Memories',
+  'Names based on songs by Daft Punk',
+  'A platform for economists',
+  'Fashion brand suggestions',
+  'A name for a coffee shop',
+  'Tech blog name ideas',
+  'A fitness app',
+  'Eco-friendly product brand',
+  'Travel agency name',
 ];
 
 const DomainInput: React.FC<DomainInputProps> = ({ onGenerate, isLoading, onSettingsClick }) => {

@@ -1,6 +1,5 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
-import { generateDomainNames, generateAlternativeNames } from './services/geminiService';
+import { generateDomainNames, generateAlternativeNames, generateRelevantQuote } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
 import type { DomainSuggestion, TLD } from './types';
 import { AvailabilityStatus } from './types';
@@ -18,6 +17,7 @@ const App: React.FC = () => {
   const [isShowingMore, setIsShowingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState('');
+  const [inspirationalQuote, setInspirationalQuote] = useState<string | null>(null);
   
   const [selectedTlds, setSelectedTlds] = useState<TLD[]>(() => {
     try {
@@ -58,14 +58,63 @@ const App: React.FC = () => {
     setError(null);
     setDomains([]);
     setLastPrompt(prompt);
+    setInspirationalQuote(null);
 
-    const trimmedPrompt = prompt.trim().toLowerCase();
-    const isSingleWord = !trimmedPrompt.includes(' ') && trimmedPrompt.length > 0;
+    // Generate the quote in parallel, don't wait for it.
+    // It will appear when ready, without a dedicated spinner.
+    generateRelevantQuote(prompt)
+      .then(setInspirationalQuote)
+      .catch(err => {
+        console.error("Quote generation failed:", err);
+        // Set a default fallback quote on error
+        setInspirationalQuote(`"The journey of a thousand miles begins with a single step."
+- Lao Tzu`);
+      });
+
+    let primarySuggestionName: string | null = null;
+    const generationPrompt = prompt; // Use the full prompt for AI context
+
+    // Pattern to find user-specified names, e.g., "... call it 'Bottom Up'"
+    const namePattern = /call(?:ed)?\s+['"]?(.+?)['"]?$/i;
+    const match = prompt.match(namePattern);
+
+    if (match && match[1]) {
+      // Case 1: User explicitly stated a name.
+      let potentialName = match[1].trim();
+      
+      // Clean up conversational fluff like "or something like that" from the end of the extracted name.
+      potentialName = potentialName.replace(/\s+or\s+something(\s+like\s+that)?$/i, '').trim();
+
+      primarySuggestionName = potentialName;
+      
+    } else {
+      // Case 2: No explicit name. Check if the prompt is a short, combinable phrase (1-2 words).
+      const words = prompt.trim().split(/\s+/);
+      if (words.length > 0 && words.length <= 2) {
+        primarySuggestionName = prompt.trim();
+      }
+      // For longer sentences without an explicit name, we won't create a combined version.
+    }
+    
+    const combinedName = primarySuggestionName 
+      ? primarySuggestionName.toLowerCase().replace(/\s+/g, '').replace(/[\.]+/g, '') 
+      : null;
+
+    let primarySuggestion: DomainSuggestion | null = null;
+    let existingNamesForAI: string[] = [];
+
+    if (combinedName) {
+      primarySuggestion = {
+        id: `${combinedName}-${Date.now()}-${Math.random()}`,
+        name: combinedName,
+        availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+        isGeneratingAlternatives: false,
+      };
+      existingNamesForAI.push(combinedName);
+    }
 
     try {
-      // Pass the single word to the AI to avoid it being suggested again.
-      const existingNamesForAI = isSingleWord ? [trimmedPrompt] : [];
-      const names = await generateDomainNames(prompt, existingNamesForAI);
+      const names = await generateDomainNames(generationPrompt, existingNamesForAI);
 
       let suggestions: DomainSuggestion[] = names.map(name => ({
         id: `${name}-${Date.now()}-${Math.random()}`,
@@ -74,15 +123,10 @@ const App: React.FC = () => {
         isGeneratingAlternatives: false,
       }));
 
-      // If it's a single word search, add it to the top of the list.
-      if (isSingleWord) {
-        const singleWordSuggestion: DomainSuggestion = {
-          id: `${trimmedPrompt}-${Date.now()}-${Math.random()}`,
-          name: trimmedPrompt.replace(/[\s.]+/g, ''), // Sanitize just in case
-          availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
-          isGeneratingAlternatives: false,
-        };
-        suggestions.unshift(singleWordSuggestion);
+      // If a primary suggestion was created, add it to the top of the list,
+      // avoiding duplicates if the AI suggested the same name.
+      if (primarySuggestion && !suggestions.some(s => s.name === primarySuggestion!.name)) {
+        suggestions.unshift(primarySuggestion);
       }
 
       setDomains(suggestions);
@@ -243,24 +287,48 @@ const App: React.FC = () => {
             domainName={domainForCheckAll}
         />
 
+        {inspirationalQuote && (
+          <div className="mt-16 w-full max-w-3xl text-center animate-fade-in">
+            {(() => {
+              const parts = inspirationalQuote.split('\n');
+              // Handle case where there might be no newline (e.g., API error fallback)
+              if (parts.length < 2) {
+                return <p className="text-xl italic text-zinc-400 leading-relaxed whitespace-pre-wrap">{inspirationalQuote}</p>;
+              }
+              const author = parts.pop();
+              const quoteText = parts.join('\n');
+              return (
+                <figure>
+                  <blockquote className="text-xl italic text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                    {quoteText}
+                  </blockquote>
+                  {author && (
+                    <figcaption className="mt-4 text-xs text-zinc-500">
+                      {author}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            })()}
+          </div>
+        )}
+
         {error && (
           <div className="mt-8 text-red-400 text-center">
             <strong>Error:</strong> {error}
           </div>
         )}
         
-        <div className="mt-16 w-full max-w-6xl">
-            {domains.length > 0 && 
-                <DomainList 
-                    domains={domains}
-                    selectedTlds={selectedTlds}
-                    onUpdate={updateDomainState}
-                    onCheckAvailability={handleCheckAvailability}
-                    onGenerateAlternatives={handleGenerateAlternatives}
-                    onCheckAll={handleCheckAllTlds}
-                />
-            }
-            {domains.length > 0 && !isLoading && (
+        {!isLoading && domains.length > 0 && (
+          <div className="mt-12 w-full max-w-6xl">
+              <DomainList 
+                  domains={domains}
+                  selectedTlds={selectedTlds}
+                  onUpdate={updateDomainState}
+                  onCheckAvailability={handleCheckAvailability}
+                  onGenerateAlternatives={handleGenerateAlternatives}
+                  onCheckAll={handleCheckAllTlds}
+              />
               <div 
                 className="mt-12 text-center animate-fade-in"
                 style={{ animationDelay: `${domains.length * 50}ms`}}
@@ -273,8 +341,8 @@ const App: React.FC = () => {
                   {isShowingMore ? <Loader className="w-5 h-5 text-white" /> : <span>Show More</span>}
                 </button>
               </div>
-            )}
-        </div>
+          </div>
+        )}
       </main>
       <footer className="text-center py-8 text-xs text-zinc-500">
         Vibe coded by{' '}

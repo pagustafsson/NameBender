@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import type { DomainSuggestion, TLD } from '../types';
 import { AvailabilityStatus } from '../types';
@@ -42,14 +43,16 @@ const DomainListItem: React.FC<DomainListItemProps> = ({
   }, [domain.id, domain.availability, selectedTlds, onCheckAvailability]);
 
   useEffect(() => {
-     // Check if .com is taken (if it's a selected TLD) and alternatives haven't been generated
-     const comStatus = domain.availability.find(a => a.tld === '.com')?.status;
-     
-     if (!isAlternative && comStatus === AvailabilityStatus.TAKEN && !domain.alternatives && !domain.isGeneratingAlternatives) {
-        onGenerateAlternatives(domain.id, domain.name);
-     }
+    // This should only happen for primary suggestions that don't already have alternatives.
+    if (isAlternative || domain.alternatives || domain.isGeneratingAlternatives) {
+      return;
+    }
+
+    // Always generate alternatives for a primary suggestion to ensure consistency.
+    onGenerateAlternatives(domain.id, domain.name);
+    
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain.availability, domain.id, domain.name, domain.alternatives, domain.isGeneratingAlternatives, isAlternative, onGenerateAlternatives]);
+  }, [domain.id, domain.name, domain.alternatives, domain.isGeneratingAlternatives, isAlternative, onGenerateAlternatives]);
 
   const domainInfo = (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
