@@ -40,8 +40,15 @@ const RegisterBrandView: React.FC<RegisterBrandViewProps> = ({ onHome }) => {
                          <div>
                             <h4 className="font-semibold text-cyan-400 !my-2 text-xl">TMview</h4>
                             <p className="mb-2">TMview is a free, global database of trademarks from over 70 intellectual property offices. It's an indispensable tool for checking if a name you're considering is already registered anywhere in the world.</p>
-                            <a href="https://www.tmdn.org/tmview/welcome" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#00ff99] hover:underline">
+                            <a href="https://www.tmdn.org/" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#00ff99] hover:underline">
                                 Search on TMview &rarr;
+                            </a>
+                        </div>
+                        <div>
+                            <h4 className="font-semibold text-cyan-400 !my-2 text-xl">USPTO</h4>
+                            <p className="mb-2">The United States Patent and Trademark Office is the federal agency for granting U.S. patents and registering trademarks. If the United States is a primary market for your business, searching and registering with the USPTO is a critical step.</p>
+                            <a href="https://www.uspto.gov/" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#00ff99] hover:underline">
+                                Explore the USPTO &rarr;
                             </a>
                         </div>
                     </div>
