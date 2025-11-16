@@ -1,4 +1,3 @@
-
 export enum AvailabilityStatus {
   UNKNOWN = 'UNKNOWN',
   CHECKING = 'CHECKING',
@@ -19,4 +18,17 @@ export interface DomainSuggestion {
   availability: DomainAvailability[];
   alternatives?: DomainSuggestion[];
   isGeneratingAlternatives: boolean;
+}
+
+export interface BlogPostContentSection {
+  heading: string;
+  body: string; // Supports markdown for lists
+}
+
+export interface BlogPostData {
+  id: string;
+  title: string;
+  intro: string;
+  sections: BlogPostContentSection[];
+  takeaway: string;
 }

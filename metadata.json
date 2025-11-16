@@ -1,5 +1,5 @@
 {
-  "name": "Epic Name Generator",
+  "name": "Name Bender",
   "description": "Generates creative domain name ideas based on a word or description and checks their availability for .ai, .com, and .co TLDs in real-time.",
   "requestFramePermissions": []
 }

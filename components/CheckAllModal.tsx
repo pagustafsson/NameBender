@@ -64,7 +64,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="check-all-modal-title"
@@ -89,14 +89,14 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
           <main className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-x-8">
             <div className="pb-6 mb-6 border-b border-zinc-800 md:pb-0 md:mb-0 md:border-b-0">
               <h3 className="text-lg font-semibold text-green-400 mb-3">Available ({available.length})</h3>
-              <ul className="space-y-1">
+              <ul className="space-y-1 columns-2 sm:columns-3 md:columns-2 lg:columns-3">
                 {available.map(({ tld }) => (
                   <li key={tld}>
                     <a 
                       href={`https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-slate-300 hover:text-[#00ff99] transition-colors"
+                      className="text-slate-300 hover:text-[#00ff99] transition-colors break-inside-avoid"
                     >
                       {domainName}{tld}
                     </a>
@@ -106,14 +106,14 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
             </div>
             <div>
               <h3 className="text-lg font-semibold text-red-400 mb-3">Taken ({taken.length})</h3>
-              <ul className="space-y-1">
+              <ul className="space-y-1 columns-2 sm:columns-3 md:columns-2 lg:columns-3">
                 {taken.map(({ tld }) => (
                   <li key={tld}>
                     <a 
                       href={`https://${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-zinc-500 hover:text-zinc-400 transition-colors line-through"
+                      className="text-zinc-500 hover:text-zinc-400 transition-colors line-through break-inside-avoid"
                     >
                       {domainName}{tld}
                     </a>

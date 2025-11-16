@@ -1,12 +1,13 @@
 // A curated list of popular and interesting TLDs.
 // Sourced from various lists of common TLDs available for public registration.
-export const ALL_TLDS: string[] = [
+// De-duplicated to ensure a clean source list.
+export const ALL_TLDS: string[] = Array.from(new Set([
   // Popular Generic
   '.com', '.net', '.org', '.info', '.biz', '.io', '.co', '.app', '.dev',
 
   // Tech & Startups
   '.ai', '.tech', '.software', '.cloud', '.digital', '.systems', '.data', '.online',
-  '.site', '.website', '.space', '.pro', '.xyz', '.link', '.click', '.dev',
+  '.site', '.website', '.space', '.pro', '.xyz', '.link', '.click',
   '.codes', '.tools', '.build', '.network',
 
   // Business & Finance
@@ -24,7 +25,7 @@ export const ALL_TLDS: string[] = [
   '.agency', '.press', '.news', '.blog', '.social', '.live',
 
   // Lifestyle & Community
-  '.life', '.style', '.world', '.community', '.group', '.club', '.family', '.fun',
+  '.life', '.world', '.community', '.group', '.club', '.family', '.fun',
   '.cool', '.zone', '.today', '.expert', '.guru', '.ninja', '.monster',
 
   // Food & Drink
@@ -44,29 +45,27 @@ export const ALL_TLDS: string[] = [
 
   // Education & Professional
   '.edu', '.academy', '.college', '.university', '.school', '.study', '.courses', '.institute',
-  '.foundation', '.org', '.ong',
+  '.foundation', '.ong',
 
   // Geographic (examples)
   '.nyc', '.london', '.paris', '.tokyo', '.berlin', '.us', '.uk', '.ca', '.de', '.fr', '.se',
 
   // Other Interesting/Modern TLDs
   '.aero', '.asia', '.bet', '.bio', '.blue', '.cat', '.ceo', '.charity', '.chat', '.church',
-  '.city', '.computer', '.consulting', '.contact', '.contractors', '.cool', '.credit',
+  '.city', '.computer', '.consulting', '.contact', '.contractors', '.credit',
   '.creditcard', '.cricket', '.dance', '.date', '.delivery', '.democrat', '.diamonds',
   '.directory', '.doctor', '.dog', '.domains', '.earth', '.email', '.energy', '.engineer',
-  '.enterprises', '.equipment', '.events', '.exchange', '.fail', '.farm', '.fashion',
-  '.fish', '.florist', '.football', '.fyi', '.games', '.garden', '.glass', '.global',
-  '.gold', '.golf', '.guide', '.guitars', '.hockey', '.hosting', '.how', '.immo',
-  '.industries', '.ink', '.international', '.jetzt', '.jobs', '.land', '.lawyer', '.legal',
-  '.lighting', '.loan', '.loans', '.lol', '.luxe', '.maison', '.management', '.map',
-  '.memorial', '.men', '.menu', '.moda', '.mom', '.mortgage', '.movie', '.museum',
-  '.music', '.one', '.onl', '.page', '.partners', '.parts', '.party', '.pet', '.phone',
-  '.place', '.plumbing', '.plus', '.poker', '.porn', '.productions', '.promo', '.pub',
-  '.red', '.rehab', '.report', '.republican', '.rest', '.review', '.reviews', '.rip',
-  '.rocks', '.run', '.save', '.science', '.security', '.sexy', '.shiksha', '.singles',
-  '.soccer', '.solar', '.surf', '.surgery', '.tax', '.tattoo', '.team', '.theater', '.tips',
-  '.tires', '.tours', '.town', '.toys', '.trade', '.training', '.tube', '.vet', '.viajes',
-  '.villas', '.vision', '.vote', '.voyage', '.watch', '.webcam', '.wiki', '.win', '.work',
-  '.works', '.wtf', '.zone'
-// FIX: Added explicit types to filter callback to prevent type inference issues, which was causing the error in TldSettingsModal.tsx.
-].filter((tld: string, index: number, self: readonly string[]) => self.indexOf(tld) === index && tld.startsWith('.')).sort();
+  '.enterprises', '.equipment', '.events', '.fail', '.farm', '.fish', '.florist', 
+  '.football', '.fyi', '.games', '.garden', '.glass', '.global', '.gold', '.golf', 
+  '.guide', '.guitars', '.hockey', '.hosting', '.how', '.immo', '.industries', '.ink', 
+  '.international', '.jetzt', '.jobs', '.land', '.lawyer', '.legal', '.lighting', '.loan', 
+  '.loans', '.lol', '.luxe', '.maison', '.management', '.map', '.memorial', '.men', 
+  '.moda', '.mom', '.mortgage', '.movie', '.museum', '.music', '.one', '.onl', '.page', 
+  '.partners', '.parts', '.party', '.pet', '.phone', '.place', '.plumbing', '.plus', 
+  '.poker', '.porn', '.productions', '.promo', '.red', '.rehab', '.report', '.republican', 
+  '.rest', '.review', '.reviews', '.rip', '.rocks', '.run', '.save', '.science', '.security', 
+  '.sexy', '.shiksha', '.singles', '.soccer', '.solar', '.surf', '.surgery', '.tax', 
+  '.tattoo', '.team', '.theater', '.tips', '.tires', '.town', '.toys', '.trade', 
+  '.training', '.tube', '.vet', '.viajes', '.villas', '.vision', '.vote', '.voyage', 
+  '.watch', '.webcam', '.wiki', '.win', '.work', '.works', '.wtf'
+])).sort();
