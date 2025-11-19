@@ -17,6 +17,7 @@ export interface DomainSuggestion {
   id: string;
   name: string;
   availability: DomainAvailability[];
+  trademarkStatus: AvailabilityStatus;
 }
 
 export interface BlogPostContentSection {

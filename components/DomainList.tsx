@@ -9,6 +9,7 @@ interface DomainListProps {
   onUpdate: (id: string, updates: Partial<DomainSuggestion>) => void;
   onCheckAvailability: (id: string, tld: TLD) => Promise<void>;
   onCheckAll: (name: string) => void;
+  onCheckTrademark: (id: string, name: string) => void;
 }
 
 const DomainList: React.FC<DomainListProps> = ({ domains, selectedTlds, ...rest }) => {

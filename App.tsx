@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateDomainNames } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
+import { checkTrademarkAvailability } from './services/trademarkService';
 import type { DomainSuggestion, TLD, BlogPostData } from './types';
 import { AvailabilityStatus } from './types';
 import { BLOG_POSTS } from '../constants/blogPosts';
@@ -95,6 +96,7 @@ const App: React.FC = () => {
         id: `${combinedName}-${Date.now()}`,
         name: combinedName,
         availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+        trademarkStatus: AvailabilityStatus.UNKNOWN,
       };
       existingNamesForAI.push(combinedName);
     }
@@ -105,6 +107,7 @@ const App: React.FC = () => {
         id: `${name}-${Date.now()}-${Math.random()}`,
         name,
         availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+        trademarkStatus: AvailabilityStatus.UNKNOWN,
       }));
 
       if (primarySuggestion && !suggestions.some(s => s.name === primarySuggestion!.name)) {
@@ -147,6 +150,21 @@ const App: React.FC = () => {
     updateDomainAvailability(id, tld, status);
   }, [updateDomainAvailability, domains]);
 
+  const handleCheckTrademark = useCallback(async (id: string, name: string) => {
+     updateDomainState(id, { trademarkStatus: AvailabilityStatus.CHECKING });
+     
+     // Check if API key is set by checking result of a dummy call or just use logic in service
+     // We delegate fully to service
+     const status = await checkTrademarkAvailability(name);
+     
+     if (status === AvailabilityStatus.UNKNOWN && !process.env.EUIPO_API_KEY) {
+        // Fallback: If no API key is configured, open TMview in a new tab
+        window.open(`https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&basicSearch=${name}`, '_blank');
+        updateDomainState(id, { trademarkStatus: AvailabilityStatus.UNKNOWN });
+     } else {
+        updateDomainState(id, { trademarkStatus: status });
+     }
+  }, [updateDomainState]);
 
   const handleShowMore = async () => {
     setIsShowingMore(true);
@@ -160,6 +178,7 @@ const App: React.FC = () => {
             id: `${name}-${Date.now()}`,
             name,
             availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
+            trademarkStatus: AvailabilityStatus.UNKNOWN,
         }));
         setDomains(prevDomains => [...prevDomains, ...newSuggestions]);
     } catch(e) {
@@ -214,7 +233,14 @@ const App: React.FC = () => {
             
             {!isLoading && domains.length > 0 && (
               <div className="mt-12 w-full max-w-6xl">
-                  <DomainList domains={domains} selectedTlds={selectedTlds} onUpdate={updateDomainState} onCheckAvailability={handleCheckAvailability} onCheckAll={handleCheckAllTlds} />
+                  <DomainList 
+                    domains={domains} 
+                    selectedTlds={selectedTlds} 
+                    onUpdate={updateDomainState} 
+                    onCheckAvailability={handleCheckAvailability} 
+                    onCheckAll={handleCheckAllTlds}
+                    onCheckTrademark={handleCheckTrademark}
+                  />
                   <div className="mt-12 text-center animate-fade-in" style={{ animationDelay: `${domains.length * 50}ms`}}>
                     <button onClick={handleShowMore} disabled={isShowingMore} className="flex items-center justify-center mx-auto px-8 py-3 font-semibold text-black bg-[#00ff99] rounded-lg hover:opacity-90 disabled:bg-opacity-75 disabled:cursor-not-allowed min-w-[160px]">
                       {isShowingMore ? <Loader className="w-5 h-5 text-white" /> : <span>Show More</span>}
