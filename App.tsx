@@ -1,5 +1,6 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
-import { generateDomainNames, generateAlternativeNames } from './services/geminiService';
+import { generateDomainNames } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
 import type { DomainSuggestion, TLD, BlogPostData } from './types';
 import { AvailabilityStatus } from './types';
@@ -94,7 +95,6 @@ const App: React.FC = () => {
         id: `${combinedName}-${Date.now()}`,
         name: combinedName,
         availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
-        isGeneratingAlternatives: false,
       };
       existingNamesForAI.push(combinedName);
     }
@@ -105,7 +105,6 @@ const App: React.FC = () => {
         id: `${name}-${Date.now()}-${Math.random()}`,
         name,
         availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
-        isGeneratingAlternatives: false,
       }));
 
       if (primarySuggestion && !suggestions.some(s => s.name === primarySuggestion!.name)) {
@@ -122,10 +121,7 @@ const App: React.FC = () => {
 
   const updateDomainState = useCallback((id: string, updates: Partial<DomainSuggestion>) => {
     setDomains(prevDomains =>
-      prevDomains.map(d => (d.id === id ? { ...d, ...updates } : {
-        ...d,
-        alternatives: d.alternatives?.map(alt => alt.id === id ? { ...alt, ...updates } : alt)
-      }))
+      prevDomains.map(d => (d.id === id ? { ...d, ...updates } : d))
     );
   }, []);
 
@@ -138,55 +134,25 @@ const App: React.FC = () => {
          });
 
          if (domain.id === id) return updateAvailability(domain);
-         
-         if (domain.alternatives) {
-           return {
-             ...domain,
-             alternatives: domain.alternatives.map(alt => alt.id === id ? updateAvailability(alt) : alt)
-           };
-         }
          return domain;
        })
      );
    }, []);
 
   const handleCheckAvailability = useCallback(async (id: string, tld: TLD) => {
-    let domainToCheck: DomainSuggestion | undefined;
-    for (const d of domains) {
-        if (d.id === id) { domainToCheck = d; break; }
-        if (d.alternatives) {
-            domainToCheck = d.alternatives.find(alt => alt.id === id);
-            if (domainToCheck) break;
-        }
-    }
+    const domainToCheck = domains.find(d => d.id === id);
     if (!domainToCheck) return;
     updateDomainAvailability(id, tld, AvailabilityStatus.CHECKING);
     const status = await checkDomainAvailability(domainToCheck.name, tld);
     updateDomainAvailability(id, tld, status);
   }, [updateDomainAvailability, domains]);
 
-  const handleGenerateAlternatives = useCallback(async (id: string, name: string) => {
-    updateDomainState(id, { isGeneratingAlternatives: true });
-    try {
-        const altNames = await generateAlternativeNames(name);
-        const altSuggestions: DomainSuggestion[] = altNames.map(altName => ({
-            id: `${altName}-${Date.now()}-${Math.random()}`,
-            name: altName,
-            availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
-            isGeneratingAlternatives: false,
-        }));
-        updateDomainState(id, { alternatives: altSuggestions, isGeneratingAlternatives: false });
-    } catch (e) {
-        console.error("Failed to generate alternatives for", name);
-        updateDomainState(id, { isGeneratingAlternatives: false });
-    }
-  }, [updateDomainState, selectedTlds]);
 
   const handleShowMore = async () => {
     setIsShowingMore(true);
     setError(null);
     try {
-        const existingNames = domains.flatMap(d => [d.name, ...(d.alternatives?.map(a => a.name) || [])]);
+        const existingNames = domains.map(d => d.name);
         const newNames = await generateDomainNames(lastPrompt, existingNames);
         const newSuggestions: DomainSuggestion[] = newNames
           .filter(name => !existingNames.includes(name))
@@ -194,7 +160,6 @@ const App: React.FC = () => {
             id: `${name}-${Date.now()}`,
             name,
             availability: selectedTlds.map(tld => ({ tld, status: AvailabilityStatus.UNKNOWN })),
-            isGeneratingAlternatives: false,
         }));
         setDomains(prevDomains => [...prevDomains, ...newSuggestions]);
     } catch(e) {
@@ -212,7 +177,7 @@ const App: React.FC = () => {
         ...suggestion,
         availability: newTlds.map(tld => suggestion.availability.find(a => a.tld === tld) || { tld, status: AvailabilityStatus.UNKNOWN }),
       });
-      setDomains(domains.map(d => ({...updateAvailability(d), alternatives: d.alternatives?.map(updateAvailability)})));
+      setDomains(domains.map(d => updateAvailability(d)));
     }
   };
   
@@ -249,7 +214,7 @@ const App: React.FC = () => {
             
             {!isLoading && domains.length > 0 && (
               <div className="mt-12 w-full max-w-6xl">
-                  <DomainList domains={domains} selectedTlds={selectedTlds} onUpdate={updateDomainState} onCheckAvailability={handleCheckAvailability} onGenerateAlternatives={handleGenerateAlternatives} onCheckAll={handleCheckAllTlds} />
+                  <DomainList domains={domains} selectedTlds={selectedTlds} onUpdate={updateDomainState} onCheckAvailability={handleCheckAvailability} onCheckAll={handleCheckAllTlds} />
                   <div className="mt-12 text-center animate-fade-in" style={{ animationDelay: `${domains.length * 50}ms`}}>
                     <button onClick={handleShowMore} disabled={isShowingMore} className="flex items-center justify-center mx-auto px-8 py-3 font-semibold text-black bg-[#00ff99] rounded-lg hover:opacity-90 disabled:bg-opacity-75 disabled:cursor-not-allowed min-w-[160px]">
                       {isShowingMore ? <Loader className="w-5 h-5 text-white" /> : <span>Show More</span>}

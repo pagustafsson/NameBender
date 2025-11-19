@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { ALL_TLDS } from '../../constants/tlds';
 import { checkDomainAvailability } from '../../services/domainService';
@@ -68,8 +69,12 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
       role="dialog"
       aria-modal="true"
       aria-labelledby="check-all-modal-title"
+      onClick={onClose}
     >
-      <div className="bg-[#111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[calc(100vh-2rem)] flex flex-col">
+      <div 
+        className="bg-[#111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[calc(100vh-2rem)] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className="p-6 border-b border-zinc-800 shrink-0">
           <h2 id="check-all-modal-title" className="text-xl font-bold text-slate-100">
             Checking all TLDs for: <span className="text-[#00ff99]">{domainName}</span>
@@ -78,44 +83,46 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
 
         {isLoading && (
           <div className="p-6 flex-grow flex flex-col items-center justify-center">
-            <div className="w-full bg-zinc-800 rounded-full h-2.5">
-              <div className="bg-[#00ff99] h-2.5 rounded-full" style={{ width: `${Math.round(progress * 100)}%` }}></div>
+            <div className="w-full bg-zinc-800 rounded-full h-2.5 mb-4">
+              <div className="bg-[#00ff99] h-2.5 rounded-full transition-all duration-300" style={{ width: `${Math.round(progress * 100)}%` }}></div>
             </div>
-            <p className="mt-4 text-zinc-400">{totalChecked} of {ALL_TLDS.length} TLDs checked...</p>
+            <p className="text-zinc-400">{totalChecked} of {ALL_TLDS.length} TLDs checked...</p>
           </div>
         )}
         
         {!isLoading && (
-          <main className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-x-8">
-            <div className="pb-6 mb-6 border-b border-zinc-800 md:pb-0 md:mb-0 md:border-b-0">
-              <h3 className="text-lg font-semibold text-green-400 mb-3">Available ({available.length})</h3>
-              <ul className="space-y-1 columns-2 sm:columns-3 md:columns-2 lg:columns-3">
+          <main className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="pb-6 md:pb-0">
+              <h3 className="text-lg font-semibold text-green-400 mb-4 sticky top-0 bg-[#111] py-2 z-10 border-b border-zinc-800/50">Available ({available.length})</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {available.map(({ tld }) => (
                   <li key={tld}>
                     <a 
                       href={`https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-slate-300 hover:text-[#00ff99] transition-colors break-inside-avoid"
+                      title={`${domainName}${tld}`}
+                      className="block truncate text-slate-300 hover:text-[#00ff99] transition-colors"
                     >
-                      {domainName}{tld}
+                      {domainName}<span className="opacity-75">{tld}</span>
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-red-400 mb-3">Taken ({taken.length})</h3>
-              <ul className="space-y-1 columns-2 sm:columns-3 md:columns-2 lg:columns-3">
+              <h3 className="text-lg font-semibold text-red-400 mb-4 sticky top-0 bg-[#111] py-2 z-10 border-b border-zinc-800/50">Taken ({taken.length})</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {taken.map(({ tld }) => (
                   <li key={tld}>
                     <a 
                       href={`https://${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-zinc-500 hover:text-zinc-400 transition-colors line-through break-inside-avoid"
+                      title={`${domainName}${tld}`}
+                      className="block truncate text-zinc-500 hover:text-zinc-400 transition-colors line-through"
                     >
-                      {domainName}{tld}
+                      {domainName}<span className="opacity-75">{tld}</span>
                     </a>
                   </li>
                 ))}
