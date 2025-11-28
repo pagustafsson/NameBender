@@ -2,7 +2,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateDomainNames } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
-import { checkTrademarkAvailability } from './services/trademarkService';
 import type { DomainSuggestion, TLD, BlogPostData } from './types';
 import { AvailabilityStatus } from './types';
 import { BLOG_POSTS } from '../constants/blogPosts';
@@ -150,21 +149,10 @@ const App: React.FC = () => {
     updateDomainAvailability(id, tld, status);
   }, [updateDomainAvailability, domains]);
 
-  const handleCheckTrademark = useCallback(async (id: string, name: string) => {
-     updateDomainState(id, { trademarkStatus: AvailabilityStatus.CHECKING });
-     
-     // Check if API key is set by checking result of a dummy call or just use logic in service
-     // We delegate fully to service
-     const status = await checkTrademarkAvailability(name);
-     
-     if (status === AvailabilityStatus.UNKNOWN && !process.env.EUIPO_API_KEY) {
-        // Fallback: If no API key is configured, open TMview in a new tab
-        window.open(`https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&basicSearch=${name}`, '_blank');
-        updateDomainState(id, { trademarkStatus: AvailabilityStatus.UNKNOWN });
-     } else {
-        updateDomainState(id, { trademarkStatus: status });
-     }
-  }, [updateDomainState]);
+  const handleCheckTrademark = useCallback((id: string, name: string) => {
+    // Direct link to TMView search results
+    window.open(`https://www.tmdn.org/tmview/#/tmview/results?page=1&pageSize=30&criteria=C&basicSearch=${name}`, '_blank');
+  }, []);
 
   const handleShowMore = async () => {
     setIsShowingMore(true);
