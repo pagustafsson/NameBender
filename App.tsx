@@ -245,6 +245,24 @@ const App: React.FC = () => {
             </header>
             <DomainInput onGenerate={handleGenerate} isLoading={isLoading} onSettingsClick={() => setIsTldModalOpen(true)} />
 
+            {!apiKey && (
+              <div className="mt-6 p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-yellow-500">⚠️</span>
+                  <p className="text-sm text-zinc-400">
+                    An API Key is required to generate names.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsApiKeyModalOpen(true)}
+                  className="text-sm font-semibold text-[#00ff99] hover:underline whitespace-nowrap"
+                >
+                  Set API Key →
+                </button>
+              </div>
+            )}
+
+
             {error && <div className="mt-8 text-red-400 text-center"><strong>Error:</strong> {error}</div>}
 
             {!isLoading && domains.length > 0 && (
@@ -285,6 +303,9 @@ const App: React.FC = () => {
             </button>
             <button onClick={() => navigateToView('register')} className="text-base font-semibold text-zinc-300 hover:text-[#00ff99] transition-colors">
               Register Your Brand
+            </button>
+            <button onClick={() => setIsApiKeyModalOpen(true)} className="text-base font-semibold text-zinc-300 hover:text-[#00ff99] transition-colors">
+              Set API Key
             </button>
           </div>
           <p className="text-xs">Vibe coded by <a href="https://linkedin.com/in/pagustafsson" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#00ff99] transition-colors">P-A Gustafsson</a></p>
