@@ -7,20 +7,15 @@ if (!API_KEY) {
   console.warn("API_KEY environment variable not set. Using a placeholder.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+export const generateDomainNames = async (description: string, existingNames: string[] = [], apiKey?: string): Promise<string[]> => {
+  const effectiveApiKey = apiKey || process.env.GEMINI_API_KEY;
 
-const parseDomainResponse = (responseText: string): string[] => {
-    const jsonMatch = responseText.match(/{[\s\S]*}/);
-    if (!jsonMatch) {
-        console.error("No valid JSON object found in the AI response.");
-        return [];
-    }
-    const sanitizedText = jsonMatch[0];
-    const result = JSON.parse(sanitizedText);
-    return (result.domains || []).map((domain: string) => domain.toLowerCase().replace(/[\s.]+/g, ''));
-}
+  if (!effectiveApiKey) {
+    throw new Error("Gemini API Key is missing. Please provide it in the settings.");
+  }
 
-export const generateDomainNames = async (description: string, existingNames: string[] = []): Promise<string[]> => {
+  const ai = new GoogleGenAI({ apiKey: effectiveApiKey });
+
   let responseText = '';
   try {
     const systemInstruction = `You are an expert domain name generator with two primary modes: Factual Retrieval and Creative Brainstorming. Your goal is to provide highly relevant and brandable domain name ideas.
@@ -36,18 +31,18 @@ After providing fact-based names, or if the prompt is purely abstract, you can g
 - **Do not add generic suffixes** like 'fans', 'club', 'verse', unless it's a highly creative part of a new, invented name.
 - **Preserve Spelling:** When combining multiple words from a title (e.g., 'Human After All'), you MUST merge them by simply removing the spaces, without dropping any letters. Correct: 'humanafterall'. Incorrect: 'humanfterall'.
 - You MUST respond with ONLY a valid JSON object in the format \`{"domains": ["name1", "name2", ...]}\`.`;
-    
+
     let userPrompt = `Generate a list of 30 domain name ideas for: "${description}".`;
     if (existingNames.length > 0) {
-        userPrompt += ` Provide completely new ideas that are not on this list: ${existingNames.join(', ')}.`;
+      userPrompt += ` Provide completely new ideas that are not on this list: ${existingNames.join(', ')}.`;
     }
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: { systemInstruction, tools: [{googleSearch: {}}] },
+      model: 'gemini-2.5-flash',
+      contents: userPrompt,
+      config: { systemInstruction, tools: [{ googleSearch: {} }] },
     });
-    
+
     responseText = response.text;
     return parseDomainResponse(responseText);
   } catch (error) {
