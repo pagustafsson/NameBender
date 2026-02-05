@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://pagustafsson.github.io/Epic-Domain-Generator",
+  "homepage": "https://pagustafsson.github.io/NameBender",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
