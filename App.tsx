@@ -4,7 +4,7 @@ import { generateDomainNames } from './services/geminiService';
 import { checkDomainAvailability } from './services/domainService';
 import type { DomainSuggestion, TLD, BlogPostData } from './types';
 import { AvailabilityStatus } from './types';
-import { BLOG_POSTS } from '../constants/blogPosts';
+import { BLOG_POSTS } from './constants/blogPosts';
 import DomainInput from './components/DomainInput';
 import DomainList from './components/DomainList';
 import Loader from './components/Loader';

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { TLD } from '../types';
-import { ALL_TLDS } from '../../constants/tlds';
+import { ALL_TLDS } from '../constants/tlds';
 
 interface TldSettingsModalProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ const TldSettingsModal: React.FC<TldSettingsModalProps> = ({ isOpen, onClose, on
     // FIX: Use spread syntax to convert Set to array to ensure proper type inference.
     onSave([...currentSelection]);
   };
-  
+
   const filteredTlds = useMemo(() => {
     return ALL_TLDS.filter(tld => tld.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [searchTerm]);
@@ -46,7 +46,7 @@ const TldSettingsModal: React.FC<TldSettingsModalProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
@@ -69,16 +69,16 @@ const TldSettingsModal: React.FC<TldSettingsModalProps> = ({ isOpen, onClose, on
         </div>
 
         <div className="px-6 pb-4 shrink-0">
-            <h3 className="text-sm font-semibold text-zinc-300 mb-2">Selected ({currentSelection.size}/6)</h3>
-            <div className="flex flex-wrap gap-2 min-h-[36px]">
-                {/* FIX: Use spread syntax to convert Set to array to ensure proper type inference. */}
-                {[...currentSelection].map(tld => (
-                    <div key={tld} className="flex items-center gap-2 bg-zinc-800 text-slate-100 px-3 py-1 rounded-md">
-                        <span>{tld}</span>
-                        <button onClick={() => handleToggleTld(tld)} className="text-zinc-500 hover:text-white">&times;</button>
-                    </div>
-                ))}
-            </div>
+          <h3 className="text-sm font-semibold text-zinc-300 mb-2">Selected ({currentSelection.size}/6)</h3>
+          <div className="flex flex-wrap gap-2 min-h-[36px]">
+            {/* FIX: Use spread syntax to convert Set to array to ensure proper type inference. */}
+            {[...currentSelection].map(tld => (
+              <div key={tld} className="flex items-center gap-2 bg-zinc-800 text-slate-100 px-3 py-1 rounded-md">
+                <span>{tld}</span>
+                <button onClick={() => handleToggleTld(tld)} className="text-zinc-500 hover:text-white">&times;</button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <main className="px-6 pb-6 overflow-y-auto">

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ALL_TLDS } from '../../constants/tlds';
-import { checkDomainAvailability } from '../../services/domainService';
+import { ALL_TLDS } from '../constants/tlds';
+import { checkDomainAvailability } from '../services/domainService';
 import { AvailabilityStatus, TLD } from '../types';
 
 interface CheckAllModalProps {
@@ -31,10 +31,10 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
       setIsLoading(true);
       setProgress(0);
       setResults([]);
-      
+
       for (let i = 0; i < ALL_TLDS.length; i += BATCH_SIZE) {
         const batch = ALL_TLDS.slice(i, i + BATCH_SIZE);
-        const promises = batch.map(tld => 
+        const promises = batch.map(tld =>
           checkDomainAvailability(domainName, tld).then(status => ({ tld, status }))
         );
 
@@ -64,14 +64,14 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
   const totalChecked = Math.round(progress * ALL_TLDS.length);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="check-all-modal-title"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-[#111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[calc(100vh-2rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
@@ -89,7 +89,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
             <p className="text-zinc-400">{totalChecked} of {ALL_TLDS.length} TLDs checked...</p>
           </div>
         )}
-        
+
         {!isLoading && (
           <main className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="pb-6 md:pb-0">
@@ -97,7 +97,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {available.map(({ tld }) => (
                   <li key={tld}>
-                    <a 
+                    <a
                       href={`https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -115,7 +115,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                 {taken.map(({ tld }) => (
                   <li key={tld}>
-                    <a 
+                    <a
                       href={`https://${domainName}${tld}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -130,7 +130,7 @@ const CheckAllModal: React.FC<CheckAllModalProps> = ({ isOpen, onClose, domainNa
             </div>
           </main>
         )}
-        
+
         <footer className="p-6 border-t border-zinc-800 flex justify-end shrink-0">
           <button
             onClick={onClose}
