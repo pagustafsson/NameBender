@@ -239,12 +239,7 @@ const App: React.FC = () => {
         return (
           <>
             <header className="text-center mb-12 relative">
-              <button
-                onClick={() => setIsApiKeyModalOpen(true)}
-                className="absolute right-0 top-0 text-xs text-zinc-600 hover:text-[#00ff99] transition-colors"
-              >
-                {apiKey ? 'Update API Key' : 'Set API Key'}
-              </button>
+
               <h1 className="text-5xl md:text-6xl font-bold mb-4 text-[#00ff99]">Name Bender</h1>
               <p className="text-lg text-gray-400 max-w-2xl mx-auto">Generate brilliant domain names with AI and check availability instantly.</p>
             </header>
